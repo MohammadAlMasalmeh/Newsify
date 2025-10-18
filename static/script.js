@@ -2,12 +2,7 @@
 
 const API_BASE_URL = 'http://localhost:8001';
 
-// Debug logging
-console.log('🌟 Newsify JavaScript loaded!');
-console.log('API Base URL:', API_BASE_URL);
-
 // Solar System Scale - matches main.py PLANETS array exactly
-// 0.0 (real) = Sun, 1.0 (fake) = Neptune
 const PLANETS_FROM_BACKEND = [
     { name: 'Sun', description: 'Highly Trustworthy' },
     { name: 'Mercury', description: 'Very Trustworthy' },
@@ -19,10 +14,6 @@ const PLANETS_FROM_BACKEND = [
     { name: 'Uranus', description: 'Likely Unreliable' },
     { name: 'Neptune', description: 'Unreliable' }
 ];
-
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('🚀 Newsify Cosmic Analysis Ready!');
-});
 
 // Get celestial body based on backend's planet mapping
 function getCelestialBodyFromBackend(backendResult) {
@@ -74,8 +65,7 @@ async function analyzeURL() {
         showResult(result, true);
         
     } catch (error) {
-        console.error('Error analyzing URL:', error);
-        showError(`URL analysis failed: ${error.message}`);
+        showError(`Analysis failed: ${error.message}`);
     } finally {
         hideLoading();
     }

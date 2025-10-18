@@ -46,26 +46,18 @@ def initialize_model():
     global _tokenizer, _model, _satire_tokenizer, _satire_model, _device
     
     if _model is None:
-        logger.info("Initializing fake news detection model...")
-        
         _device = "cuda" if torch.cuda.is_available() else "cpu"
-        logger.info(f"Using device: {_device}")
         
         _tokenizer = AutoTokenizer.from_pretrained("mrm8488/bert-tiny-finetuned-fake-news-detection")
         _model = AutoModelForSequenceClassification.from_pretrained("mrm8488/bert-tiny-finetuned-fake-news-detection")
         _model.to(_device)
-        logger.info("Fake news model loaded successfully")
     
     if _satire_model is None:
-        logger.info("Initializing sarcasm detection model...")
-        
         try:
             _satire_tokenizer = AutoTokenizer.from_pretrained("helinivan/english-sarcasm-detector")
             _satire_model = AutoModelForSequenceClassification.from_pretrained("helinivan/english-sarcasm-detector")
             _satire_model.to(_device)
-            logger.info("Sarcasm model loaded successfully")
-        except Exception as e:
-            logger.warning(f"Failed to load sarcasm model: {str(e)}")
+        except Exception:
             _satire_model = None
             _satire_tokenizer = None
 
@@ -78,8 +70,6 @@ def extract_article_text(url: str) -> Optional[str]:
         parsed = urlparse(url)
         if not parsed.scheme or not parsed.netloc:
             raise ValueError("Invalid URL format")
-        
-        logger.info(f"Fetching article from: {url}")
         
         headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
@@ -114,26 +104,11 @@ def extract_article_text(url: str) -> Optional[str]:
         article_text = ' '.join(article_text.split())
         
         if not article_text:
-            logger.warning(f"No article text extracted from {url}")
             return None
         
-        logger.info(f"Successfully extracted {len(article_text)} characters from article")
         return article_text
         
-    except requests.exceptions.ConnectionError as e:
-        logger.error(f"Connection error fetching {url}: {str(e)}")
-        return None
-    except requests.exceptions.Timeout as e:
-        logger.error(f"Timeout error fetching {url}: {str(e)}")
-        return None
-    except requests.exceptions.RequestException as e:
-        logger.error(f"Request error fetching {url}: {str(e)}")
-        return None
-    except ValueError as e:
-        logger.error(f"Invalid URL: {str(e)}")
-        return None
-    except Exception as e:
-        logger.error(f"Unexpected error extracting article from {url}: {str(e)}")
+    except Exception:
         return None
 
 
@@ -174,7 +149,6 @@ def check_cache(cache_key: str) -> Optional[Dict]:
         result, timestamp = _cache[cache_key]
         
         if datetime.now() - timestamp < timedelta(seconds=CACHE_TTL_SECONDS):
-            logger.info("Cache hit")
             return result
         else:
             del _cache[cache_key]
@@ -233,7 +207,6 @@ def get_truthfulness_score(article_input: str) -> Dict[str, Any]:
         source = "URL"
         
         if article_text is None:
-            logger.error(f"Failed to extract article from {article_input}")
             return {
                 'error': "Failed to fetch or extract article from URL",
                 'score': None,
@@ -274,11 +247,8 @@ def get_truthfulness_score(article_input: str) -> Dict[str, Any]:
     final_fake_score = 1.0 - real_probability
     
     # Check for sarcasm/satire
-    logger.info(f"Analyzing article for sarcasm/satire ({len(satire_chunks)} chunk(s))...")
-    
     satire_scores = []
-    for i, chunk in enumerate(satire_chunks):
-        logger.info(f"Processing satire chunk {i+1}/{len(satire_chunks)}")
+    for chunk in satire_chunks:
         sarcasm_chunk_score = get_satire_score(chunk)
         satire_scores.append(sarcasm_chunk_score)
     

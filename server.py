@@ -38,8 +38,6 @@ def predict_url():
             return jsonify({"error": "ValidationError", "detail": "URL is required"}), 400
         
         url = data['url']
-        logger.info(f"🌟 Analyzing article from URL: {url}")
-        
         # Call your main.py function directly
         result = get_truthfulness_score(url)
         
@@ -62,11 +60,9 @@ def predict_url():
             "planet": result.get('planet', '☀️ Sun')
         }
         
-        logger.info(f"✨ Analysis complete: {frontend_label} (confidence: {frontend_score:.4f})")
         return jsonify(response)
         
     except Exception as e:
-        logger.error(f"💥 Analysis failed: {str(e)}")
         return jsonify({"error": "InternalServerError", "detail": str(e)}), 500
 
 if __name__ == '__main__':
