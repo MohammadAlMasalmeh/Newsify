@@ -1,149 +1,344 @@
+import statistics
 import torch
 import requests
 from bs4 import BeautifulSoup
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 from urllib.parse import urlparse
+from datetime import datetime, timedelta
+import logging
+from typing import Optional, Dict, Any
 
-# Load model and tokenizer
-tokenizer = AutoTokenizer.from_pretrained("Pulk17/Fake-News-Detection")
-model = AutoModelForSequenceClassification.from_pretrained("Pulk17/Fake-News-Detection")
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
-# Define planets in order of truth value (highest to lowest)
+# Define planets in order of truth value (lowest to highest)
+# 0.0 (real) = Sun, 1.0 (fake) = Neptune
 PLANETS = [
-    "☆ Neptune",
-    "♅ Uranus",
-    "♄ Saturn",
-    "♃ Jupiter",
-    "♂️ Mars",
-    "🌍 Earth",
-    "♀️ Venus",
+    "☀️ Sun",
     "☿️ Mercury",
-    "☀️ Sun"
+    "♀️ Venus",
+    "🌍 Earth",
+    "♂️ Mars",
+    "♃ Jupiter",
+    "♄ Saturn",
+    "♅ Uranus",
+    "☆ Neptune"
 ]
 
-def extract_article_text(url: str) -> str:
+# Global variables for model and tokenizer (singleton pattern)
+_tokenizer = None
+_model = None
+_satire_tokenizer = None
+_satire_model = None
+_device = None
+
+# Cache with TTL
+_cache = {}
+CACHE_TTL_SECONDS = 3600
+
+# Known satire and satirical news publishers
+SATIRE_PUBLISHERS = {
+    'theonion.com',
+    'thebabylonbee.com',
+    'clickhole.com',
+    'onionstudios.com',
+    'newsthump.com',
+    'worldnewsdaily.org',
+    'huzlers.com',
+    'empirenews.net',
+    'politicalirony.com'
+}
+
+
+def initialize_model():
+    """
+    Lazy load and initialize the models once using singleton pattern.
+    """
+    global _tokenizer, _model, _satire_tokenizer, _satire_model, _device
+    
+    if _model is None:
+        logger.info("Initializing fake news detection model...")
+        
+        _device = "cuda" if torch.cuda.is_available() else "cpu"
+        logger.info(f"Using device: {_device}")
+        
+        _tokenizer = AutoTokenizer.from_pretrained("mrm8488/bert-tiny-finetuned-fake-news-detection")
+        _model = AutoModelForSequenceClassification.from_pretrained("mrm8488/bert-tiny-finetuned-fake-news-detection")
+        _model.to(_device)
+        logger.info("Fake news model loaded successfully")
+    
+    if _satire_model is None:
+        logger.info("Initializing sarcasm detection model...")
+        
+        try:
+            _satire_tokenizer = AutoTokenizer.from_pretrained("helinivan/english-sarcasm-detector")
+            _satire_model = AutoModelForSequenceClassification.from_pretrained("helinivan/english-sarcasm-detector")
+            _satire_model.to(_device)
+            logger.info("Sarcasm model loaded successfully")
+        except Exception as e:
+            logger.warning(f"Failed to load sarcasm model: {str(e)}")
+            _satire_model = None
+            _satire_tokenizer = None
+
+
+def extract_article_text(url: str) -> Optional[str]:
     """
     Extracts article text from a URL.
-    
-    Args:
-        url: The URL of the news article
-        
-    Returns:
-        str: The extracted article text
     """
-    headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-    }
-    
-    response = requests.get(url, headers=headers, timeout=10)
-    response.raise_for_status()
-    
-    soup = BeautifulSoup(response.content, 'html.parser')
-    
-    # Remove script and style elements
-    for script in soup(["script", "style"]):
-        script.decompose()
-    
-    # Extract text from common article elements
-    article_text = ""
-    for tag in soup.find_all(['article', 'main', 'div']):
-        if tag.get('class') and any(cls in str(tag.get('class')).lower() for cls in ['content', 'article', 'post', 'body']):
+    try:
+        parsed = urlparse(url)
+        if not parsed.scheme or not parsed.netloc:
+            raise ValueError("Invalid URL format")
+        
+        logger.info(f"Fetching article from: {url}")
+        
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+        }
+        
+        response = requests.get(url, headers=headers, timeout=10)
+        response.raise_for_status()
+        
+        soup = BeautifulSoup(response.content, 'html.parser')
+        
+        for script in soup(["script", "style"]):
+            script.decompose()
+        
+        article_text = ""
+        for tag in soup.find_all(['article', 'main']):
             article_text = tag.get_text()
             break
-    
-    # Fallback to all paragraph text if no article container found
-    if not article_text:
-        paragraphs = soup.find_all('p')
-        article_text = '\n'.join([p.get_text() for p in paragraphs])
-    
-    # Clean up whitespace
-    article_text = ' '.join(article_text.split())
-    
-    return article_text
+        
+        if not article_text:
+            for tag in soup.find_all('div'):
+                if tag.get('class') and any(
+                    cls in str(tag.get('class')).lower() 
+                    for cls in ['content', 'article', 'post', 'body', 'story']
+                ):
+                    article_text = tag.get_text()
+                    break
+        
+        if not article_text:
+            paragraphs = soup.find_all('p')
+            article_text = '\n'.join([p.get_text() for p in paragraphs])
+        
+        article_text = ' '.join(article_text.split())
+        
+        if not article_text:
+            logger.warning(f"No article text extracted from {url}")
+            return None
+        
+        logger.info(f"Successfully extracted {len(article_text)} characters from article")
+        return article_text
+        
+    except requests.exceptions.ConnectionError as e:
+        logger.error(f"Connection error fetching {url}: {str(e)}")
+        return None
+    except requests.exceptions.Timeout as e:
+        logger.error(f"Timeout error fetching {url}: {str(e)}")
+        return None
+    except requests.exceptions.RequestException as e:
+        logger.error(f"Request error fetching {url}: {str(e)}")
+        return None
+    except ValueError as e:
+        logger.error(f"Invalid URL: {str(e)}")
+        return None
+    except Exception as e:
+        logger.error(f"Unexpected error extracting article from {url}: {str(e)}")
+        return None
 
-def get_truthfulness_score(article_input: str) -> dict:
+
+def chunk_text(text: str, max_tokens: int = 512) -> list:
+    """
+    Chunks text into smaller segments for processing.
+    """
+    chars_per_chunk = max_tokens * 4
+    words = text.split()
+    chunks = []
+    current_chunk = []
+    current_length = 0
+    
+    for word in words:
+        current_length += len(word) + 1
+        current_chunk.append(word)
+        
+        if current_length > chars_per_chunk:
+            chunks.append(' '.join(current_chunk))
+            current_chunk = []
+            current_length = 0
+    
+    if current_chunk:
+        chunks.append(' '.join(current_chunk))
+    
+    return chunks
+
+
+def get_cache_key(text: str) -> str:
+    """Generate cache key from text hash."""
+    import hashlib
+    return hashlib.md5(text.encode()).hexdigest()
+
+
+def check_cache(cache_key: str) -> Optional[Dict]:
+    """Check if result exists in cache and is not expired."""
+    if cache_key in _cache:
+        result, timestamp = _cache[cache_key]
+        
+        if datetime.now() - timestamp < timedelta(seconds=CACHE_TTL_SECONDS):
+            logger.info("Cache hit")
+            return result
+        else:
+            del _cache[cache_key]
+    
+    return None
+
+
+def store_cache(cache_key: str, result: Dict):
+    """Store result in cache with timestamp."""
+    _cache[cache_key] = (result, datetime.now())
+
+
+def check_satire_publisher(url: str) -> bool:
+    """Check if URL belongs to a known satire publisher."""
+    try:
+        parsed = urlparse(url)
+        domain = parsed.netloc.lower()
+        
+        if domain.startswith('www.'):
+            domain = domain[4:]
+        
+        is_satire = domain in SATIRE_PUBLISHERS
+        
+        if is_satire:
+            logger.info(f"Domain {domain} identified as known satire publisher")
+        
+        return is_satire
+    except Exception as e:
+        logger.error(f"Error checking satire publisher: {str(e)}")
+        return False
+
+
+def get_satire_score(text: str) -> float:
+    """
+    Detects sarcasm/satire in text.
+    """
+    if _satire_model is None or _satire_tokenizer is None:
+        return 0.0
+    
+    inputs = _satire_tokenizer(
+        text,
+        return_tensors="pt",
+        truncation=True,
+        max_length=512,
+        padding=True
+    )
+    
+    inputs = {k: v.to(_device) for k, v in inputs.items()}
+    
+    with torch.no_grad():
+        outputs = _satire_model(**inputs)
+    
+    probabilities = torch.nn.functional.softmax(outputs.logits, dim=-1)
+    sarcasm_score = probabilities[0][1].item()
+    
+    return sarcasm_score
+
+
+def get_truthfulness_score(article_input: str) -> Dict[str, Any]:
     """
     Analyzes an article and returns a truthfulness score (0.0-1.0) 
     and corresponding planet rating.
     
-    Args:
-        article_input: Either the article content or a URL to an article
-        
-    Returns:
-        dict with keys: 'score', 'planet', 'label', 'source'
+    Scoring scale:
+    - 0.0 = Real article (maps to Sun)
+    - 1.0 = Fake article (maps to Neptune)
     """
-    # Check if input is a URL
+    initialize_model()
+    
+    # Check if input is a URL or direct text
     if article_input.startswith('http://') or article_input.startswith('https://'):
-        try:
-            article_text = extract_article_text(article_input)
-            source = "URL"
-        except Exception as e:
+        is_satire_publisher = check_satire_publisher(article_input)
+        article_text = extract_article_text(article_input)
+        source = "URL"
+        
+        if article_text is None:
+            logger.error(f"Failed to extract article from {article_input}")
             return {
-                'error': f"Failed to fetch article from URL: {str(e)}",
+                'error': "Failed to fetch or extract article from URL",
                 'score': None,
                 'planet': None,
-                'label': None
+                'label': None,
+                'confidence': None,
+                'source': "URL"
             }
     else:
         article_text = article_input
         source = "Text"
-    # Tokenize the input
-    inputs = tokenizer(article_text, return_tensors="pt", truncation=True, 
-                      max_length=512, padding=True)
+        is_satire_publisher = False
     
-    # Get model predictions
+    # Check cache
+    cache_key = get_cache_key(article_text)
+    cached_result = check_cache(cache_key)
+    if cached_result:
+        return cached_result
+    
+    satire_chunks = chunk_text(article_text, max_tokens=512)
+    
+    # Process full article through fake news model (no chunking)
+    inputs = _tokenizer(
+        article_text, 
+        return_tensors="pt", 
+        truncation=True, 
+        max_length=512, 
+        padding=True
+    )
+    
+    inputs = {k: v.to(_device) for k, v in inputs.items()}
+    
     with torch.no_grad():
-        outputs = model(**inputs)
+        outputs = _model(**inputs)
     
-    # Apply softmax to get probabilities
     probabilities = torch.nn.functional.softmax(outputs.logits, dim=-1)
     
-    # The model outputs [fake, real] probabilities
-    # We'll use the "real" probability (index 1) as our truth score
-    truth_score = probabilities[0][1].item()
+    real_probability = probabilities[0][0].item()
+    final_fake_score = 1.0 - real_probability
     
-    # Map score to planet (0.0-1.0 maps to index 0-8)
-    planet_index = min(int(truth_score * len(PLANETS)), len(PLANETS) - 1)
+    # Check for sarcasm/satire
+    logger.info(f"Analyzing article for sarcasm/satire ({len(satire_chunks)} chunk(s))...")
+    
+    satire_scores = []
+    for i, chunk in enumerate(satire_chunks):
+        logger.info(f"Processing satire chunk {i+1}/{len(satire_chunks)}")
+        sarcasm_chunk_score = get_satire_score(chunk)
+        satire_scores.append(sarcasm_chunk_score)
+    
+    sarcasm_score = max(satire_scores) if satire_scores else 0.0
+    
+    # Combine scores
+    final_score = max(final_fake_score, sarcasm_score)
+    
+    # Map score to planet
+    planet_index = min(int(final_score * len(PLANETS)), len(PLANETS) - 1)
     planet = PLANETS[planet_index]
     
-    # Get the label (fake or real)
-    predicted_label = "Real" if truth_score > 0.5 else "Fake"
+    # Determine label
+    predicted_label = "Fake" if final_score > 0.5 else "Real"
     
-    return {
-        'score': round(truth_score, 4),
+    # Build result
+    result = {
+        'score': round(final_score, 4),
         'planet': planet,
         'label': predicted_label,
-        'confidence': round(max(probabilities[0].tolist()), 4)
+        'confidence': round(final_score, 4),
+        'fake_news_score': round(final_fake_score, 4),
+        'sarcasm_score': round(sarcasm_score, 4),
+        'is_satire_publisher': is_satire_publisher,
+        'source': source,
+        'chunks_processed': len(satire_chunks)
     }
-
-# Example usage
-if __name__ == "__main__":
-    # Test article
-    test_article = """
-    Scientists have discovered a new species of deep-sea fish in the Mariana Trench.
-    The fish, which was found at a depth of 10,000 meters, exhibits bioluminescent 
-    properties and has been named after the research vessel that discovered it.
-    """
     
-    result = get_truthfulness_score(test_article)
+    # Store in cache
+    store_cache(cache_key, result)
     
-    print(f"Article Truth Score: {result['score']}")
-    print(f"Planet Rating: {result['planet']}")
-    print(f"Label: {result['label']}")
-    print(f"Confidence: {result['confidence']}")
-    
-    # You can also analyze multiple articles
-    print("\n" + "="*50 + "\n")
-    
-    articles = [
-        "The earth is flat and NASA is lying to us.",
-        "Water boils at 100 degrees Celsius at sea level.",
-        "Drinking bleach cures all diseases."
-    ]
-    
-    for i, article in enumerate(articles, 1):
-        result = get_truthfulness_score(article)
-        print(f"Article {i}:")
-        print(f"  Score: {result['score']} - {result['planet']}")
-        print(f"  Label: {result['label']}")
-        print()
+    return result
