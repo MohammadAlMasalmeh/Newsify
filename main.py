@@ -12,7 +12,6 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Define planets in order of truth value (lowest to highest)
-# 0.0 (real) = Sun, 1.0 (fake) = Neptune
 PLANETS = [
     "☀️ Sun",
     "☿️ Mercury",
@@ -36,13 +35,9 @@ _device = None
 _cache = {}
 CACHE_TTL_SECONDS = 3600
 
-# Removed SATIRE_PUBLISHERS - relying purely on AI model classification
-
 
 def initialize_model():
-    """
-    Lazy load and initialize the models once using singleton pattern.
-    """
+    """Lazy load and initialize the models once using singleton pattern."""
     global _tokenizer, _model, _satire_tokenizer, _satire_model, _device
     
     if _model is None:
@@ -62,10 +57,44 @@ def initialize_model():
             _satire_tokenizer = None
 
 
+def clean_extracted_text(text: str) -> str:
+    """
+    Clean up extracted text by removing common noise.
+    
+    This function filters out UI elements, navigation, and spam content
+    while preserving the actual article text.
+    """
+    import re
+    
+    # Split into sentences for granular filtering
+    sentences = re.split(r'[.!?]+', text)
+    cleaned_sentences = []
+    
+    # Spam keywords to check for (but don't auto-remove entire sentences)
+    spam_keywords = ['subscribe', 'newsletter', 'click here', 'sign up', 
+                     'follow us', 'copyright', 'all rights reserved']
+    
+    for sentence in sentences:
+        sentence = sentence.strip()
+        
+        # Skip very short sentences (likely UI fragments like "Home" or "Menu")
+        if len(sentence) < 20:
+            continue
+            
+        # Skip sentences that are mostly spam
+        sentence_lower = sentence.lower()
+        spam_word_count = sum(1 for keyword in spam_keywords if keyword in sentence_lower)
+        word_count = len(sentence.split())
+        
+        # Only skip if >30% of sentence is spam keywords (preserves sentences with occasional spam words)
+        if word_count > 0 and (spam_word_count / word_count) < 0.3:
+            cleaned_sentences.append(sentence)
+    
+    return '. '.join(cleaned_sentences)
+
+
 def extract_article_text(url: str) -> Optional[str]:
-    """
-    Extracts article text from a URL.
-    """
+    """Extracts article text from a URL with improved cleaning."""
     try:
         parsed = urlparse(url)
         if not parsed.scheme or not parsed.netloc:
@@ -80,13 +109,32 @@ def extract_article_text(url: str) -> Optional[str]:
         
         soup = BeautifulSoup(response.content, 'html.parser')
         
-        for script in soup(["script", "style"]):
-            script.decompose()
+        # Remove unwanted elements
+        for element in soup(["script", "style", "nav", "header", "footer", 
+                            "aside", "iframe", "noscript", "form", "button"]):
+            element.decompose()
+        
+        # Remove common ad/tracking containers
+        for div in soup.find_all(['div', 'section', 'span']):
+            try:
+                div_class = str(div.get('class', '')).lower() if div else ''
+                div_id = str(div.get('id', '')).lower() if div else ''
+                if any(keyword in div_class or keyword in div_id 
+                       for keyword in ['ad', 'advertisement', 'social', 'share', 
+                                      'comment', 'related', 'sidebar', 'menu',
+                                      'promo', 'newsletter', 'subscription', 'popup',
+                                      'trending', 'recommended', 'widget', 'banner']):
+                    div.decompose()
+            except (AttributeError, TypeError):
+                continue
         
         article_text = ""
+        
+        # Try to find main article content
         for tag in soup.find_all(['article', 'main']):
             article_text = tag.get_text()
-            break
+            if article_text:
+                break
         
         if not article_text:
             for tag in soup.find_all('div'):
@@ -95,27 +143,31 @@ def extract_article_text(url: str) -> Optional[str]:
                     for cls in ['content', 'article', 'post', 'body', 'story']
                 ):
                     article_text = tag.get_text()
-                    break
+                    if article_text:
+                        break
         
         if not article_text:
             paragraphs = soup.find_all('p')
             article_text = '\n'.join([p.get_text() for p in paragraphs])
         
+        # Clean and normalize whitespace
         article_text = ' '.join(article_text.split())
         
-        if not article_text:
+        # Additional cleaning to remove UI noise
+        article_text = clean_extracted_text(article_text)
+        
+        if not article_text or len(article_text) < 100:
             return None
         
         return article_text
         
-    except Exception:
+    except Exception as e:
+        logger.error(f"Error extracting article: {e}")
         return None
 
 
 def chunk_text(text: str, max_tokens: int = 512) -> list:
-    """
-    Chunks text into smaller segments for processing.
-    """
+    """Chunks text into smaller segments for processing."""
     chars_per_chunk = max_tokens * 4
     words = text.split()
     chunks = []
@@ -135,6 +187,15 @@ def chunk_text(text: str, max_tokens: int = 512) -> list:
         chunks.append(' '.join(current_chunk))
     
     return chunks
+
+
+def get_middle_chunk(chunks: list) -> str:
+    """Get the middle chunk from a list of chunks."""
+    if not chunks:
+        return ""
+    
+    middle_index = len(chunks) // 2
+    return chunks[middle_index]
 
 
 def get_cache_key(text: str) -> str:
@@ -161,13 +222,8 @@ def store_cache(cache_key: str, result: Dict):
     _cache[cache_key] = (result, datetime.now())
 
 
-# Removed satire publisher checking - relying purely on AI model
-
-
 def get_satire_score(text: str) -> float:
-    """
-    Detects sarcasm/satire in text.
-    """
+    """Detects sarcasm/satire in text."""
     if _satire_model is None or _satire_tokenizer is None:
         return 0.0
     
@@ -195,9 +251,9 @@ def get_truthfulness_score(article_input: str) -> Dict[str, Any]:
     Analyzes an article and returns a truthfulness score (0.0-1.0) 
     and corresponding planet rating.
     
-    Scoring scale:
-    - 0.0 = Real article (maps to Sun)
-    - 1.0 = Fake article (maps to Neptune)
+    KEY FIX: Processes ALL chunks and averages scores to analyze entire article,
+    not just first 512 tokens. This ensures consistent results regardless of
+    website structure and HTML noise.
     """
     initialize_model()
     
@@ -225,43 +281,50 @@ def get_truthfulness_score(article_input: str) -> Dict[str, Any]:
     if cached_result:
         return cached_result
     
+    # FIXED: Chunk the text and process ALL chunks through fake news detection
+    fake_news_chunks = chunk_text(article_text, max_tokens=450)  # Leave room for special tokens
+    
+    # Process ALL chunks through fake news model and collect scores
+    fake_news_scores = []
+    for chunk in fake_news_chunks:
+        inputs = _tokenizer(
+            chunk, 
+            return_tensors="pt", 
+            truncation=True, 
+            max_length=512, 
+            padding=True
+        )
+        
+        inputs = {k: v.to(_device) for k, v in inputs.items()}
+        
+        with torch.no_grad():
+            outputs = _model(**inputs)
+        
+        probabilities = torch.nn.functional.softmax(outputs.logits, dim=-1)
+        real_probability = probabilities[0][0].item()
+        fake_news_scores.append(1.0 - real_probability)
+    
+    # Average all chunk scores to get overall fake news score
+    final_fake_score = sum(fake_news_scores) / len(fake_news_scores) if fake_news_scores else 0.0
+    
+    # Check for sarcasm/satire across all chunks
     satire_chunks = chunk_text(article_text, max_tokens=512)
-    
-    # Process full article through fake news model (no chunking)
-    inputs = _tokenizer(
-        article_text, 
-        return_tensors="pt", 
-        truncation=True, 
-        max_length=512, 
-        padding=True
-    )
-    
-    inputs = {k: v.to(_device) for k, v in inputs.items()}
-    
-    with torch.no_grad():
-        outputs = _model(**inputs)
-    
-    probabilities = torch.nn.functional.softmax(outputs.logits, dim=-1)
-    
-    real_probability = probabilities[0][0].item()
-    final_fake_score = 1.0 - real_probability
-    
-    # Check for sarcasm/satire
     satire_scores = []
     for chunk in satire_chunks:
         sarcasm_chunk_score = get_satire_score(chunk)
         satire_scores.append(sarcasm_chunk_score)
     
+    # Use maximum satire score (if any part is satirical, flag it)
     sarcasm_score = max(satire_scores) if satire_scores else 0.0
     
-    # Combine scores
+    # Combine scores: take the maximum of fake news and satire scores
     final_score = max(final_fake_score, sarcasm_score)
     
-    # Map score to planet
+    # Map score to planet (0.0 = Sun, 1.0 = Neptune)
     planet_index = min(int(final_score * len(PLANETS)), len(PLANETS) - 1)
     planet = PLANETS[planet_index]
     
-    # Determine label
+    # Determine label based on threshold
     predicted_label = "Fake" if final_score > 0.5 else "Real"
     
     # Build result
@@ -273,7 +336,7 @@ def get_truthfulness_score(article_input: str) -> Dict[str, Any]:
         'fake_news_score': round(final_fake_score, 4),
         'sarcasm_score': round(sarcasm_score, 4),
         'source': source,
-        'chunks_processed': len(satire_chunks)
+        'chunks_processed': len(fake_news_chunks)
     }
     
     # Store in cache
