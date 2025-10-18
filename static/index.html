@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🌟 Newsify - Celestial Fake News Detection</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="stars"></div>
+    <div class="shooting-star"></div>
+    
+    <div class="container">
+        <header class="header">
+            <div class="logo">
+                <span class="logo-icon">🌟</span>
+                <h1>Newsify</h1>
+            </div>
+            <p class="tagline">Navigate the cosmos of truth with celestial precision</p>
+        </header>
+
+        <main class="main-content">
+            <div class="input-section">
+                <div class="input-container">
+                    <div class="input-group">
+                        <label for="news-url">🌐 Enter news article URL to analyze:</label>
+                        <input 
+                            type="url" 
+                            id="news-url" 
+                            placeholder="https://example.com/news-article"
+                        />
+                    </div>
+                    <button class="analyze-btn" onclick="analyzeURL()">
+                        <span class="btn-icon">🚀</span>
+                        Analyze Article
+                    </button>
+                </div>
+            </div>
+
+            <div class="result-section" id="result-section" style="display: none;">
+                <div class="result-card">
+                    <div class="result-header">
+                        <h2>🔍 Analysis Complete</h2>
+                    </div>
+                    <div class="result-content">
+                        <div class="prediction-result">
+                            <div class="solar-system-result">
+                                <div class="celestial-body" id="celestial-body">
+                                    <span class="body-icon" id="body-icon"></span>
+                                    <span class="body-name" id="body-name"></span>
+                                </div>
+                                <div class="reliability-description" id="reliability-description"></div>
+                            </div>
+                            <div class="confidence-container">
+                                <div class="confidence-label">Reliability Score</div>
+                                <div class="confidence-bar">
+                                    <div class="confidence-fill" id="confidence-fill"></div>
+                                </div>
+                                <div class="confidence-score" id="confidence-score"></div>
+                            </div>
+                            <div class="classification-result">
+                                <span class="result-label" id="result-label"></span>
+                            </div>
+                        </div>
+                        <div class="extracted-text" id="extracted-text" style="display: none;">
+                            <h3>📄 Extracted Text Preview:</h3>
+                            <p id="extracted-content"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="loading" id="loading" style="display: none;">
+                <div class="loading-spinner"></div>
+                <p>🌌 Analyzing article...</p>
+            </div>
+
+            <div class="error-message" id="error-message" style="display: none;">
+                <div class="error-content">
+                    <span class="error-icon">⚠️</span>
+                    <p id="error-text"></p>
+                </div>
+            </div>
+        </main>
+
+        <footer class="footer">
+            <p>🌙 Navigate the cosmos of truth with celestial precision</p>
+        </footer>
+    </div>
+
+    <script src="/static/script.js"></script>
+</body>
+</html>

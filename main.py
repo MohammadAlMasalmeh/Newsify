@@ -1,4 +1,3 @@
-import statistics
 import torch
 import requests
 from bs4 import BeautifulSoup
@@ -37,18 +36,7 @@ _device = None
 _cache = {}
 CACHE_TTL_SECONDS = 3600
 
-# Known satire and satirical news publishers
-SATIRE_PUBLISHERS = {
-    'theonion.com',
-    'thebabylonbee.com',
-    'clickhole.com',
-    'onionstudios.com',
-    'newsthump.com',
-    'worldnewsdaily.org',
-    'huzlers.com',
-    'empirenews.net',
-    'politicalirony.com'
-}
+# Removed SATIRE_PUBLISHERS - relying purely on AI model classification
 
 
 def initialize_model():
@@ -199,24 +187,7 @@ def store_cache(cache_key: str, result: Dict):
     _cache[cache_key] = (result, datetime.now())
 
 
-def check_satire_publisher(url: str) -> bool:
-    """Check if URL belongs to a known satire publisher."""
-    try:
-        parsed = urlparse(url)
-        domain = parsed.netloc.lower()
-        
-        if domain.startswith('www.'):
-            domain = domain[4:]
-        
-        is_satire = domain in SATIRE_PUBLISHERS
-        
-        if is_satire:
-            logger.info(f"Domain {domain} identified as known satire publisher")
-        
-        return is_satire
-    except Exception as e:
-        logger.error(f"Error checking satire publisher: {str(e)}")
-        return False
+# Removed satire publisher checking - relying purely on AI model
 
 
 def get_satire_score(text: str) -> float:
@@ -258,7 +229,6 @@ def get_truthfulness_score(article_input: str) -> Dict[str, Any]:
     
     # Check if input is a URL or direct text
     if article_input.startswith('http://') or article_input.startswith('https://'):
-        is_satire_publisher = check_satire_publisher(article_input)
         article_text = extract_article_text(article_input)
         source = "URL"
         
@@ -275,7 +245,6 @@ def get_truthfulness_score(article_input: str) -> Dict[str, Any]:
     else:
         article_text = article_input
         source = "Text"
-        is_satire_publisher = False
     
     # Check cache
     cache_key = get_cache_key(article_text)
@@ -333,7 +302,6 @@ def get_truthfulness_score(article_input: str) -> Dict[str, Any]:
         'confidence': round(final_score, 4),
         'fake_news_score': round(final_fake_score, 4),
         'sarcasm_score': round(sarcasm_score, 4),
-        'is_satire_publisher': is_satire_publisher,
         'source': source,
         'chunks_processed': len(satire_chunks)
     }
