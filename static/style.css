@@ -172,6 +172,99 @@ body::before {
     gap: 2rem;
 }
 
+/* Tab Navigation */
+.tab-container {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.tab-button {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.03) 100%);
+    backdrop-filter: blur(15px);
+    border: 2px solid rgba(120, 219, 255, 0.2);
+    border-radius: 20px;
+    padding: 1.2rem 2rem;
+    color: rgba(184, 197, 255, 0.8);
+    font-family: inherit;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    position: relative;
+    overflow: hidden;
+}
+
+.tab-button::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+    transition: left 0.6s;
+}
+
+.tab-button:hover::before {
+    left: 100%;
+}
+
+.tab-button:hover {
+    border-color: rgba(120, 219, 255, 0.5);
+    color: #78dbff;
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px rgba(120, 219, 255, 0.2);
+}
+
+.tab-button.active {
+    background: linear-gradient(135deg, #78dbff 0%, #a855f7 50%, #ec4899 100%);
+    border-color: transparent;
+    color: white;
+    box-shadow: 
+        0 15px 35px rgba(120, 219, 255, 0.4),
+        0 5px 15px rgba(168, 85, 247, 0.3);
+}
+
+.tab-button.active:hover {
+    transform: translateY(-3px);
+    box-shadow: 
+        0 20px 40px rgba(120, 219, 255, 0.5),
+        0 8px 20px rgba(168, 85, 247, 0.4);
+}
+
+.tab-icon {
+    font-size: 1.3rem;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+}
+
+/* Tab Content */
+.tab-content {
+    display: none;
+    animation: fadeInUp 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.tab-content.active {
+    display: block;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
 /* Solar System Result Styling */
 .solar-system-result {
     text-align: center;
@@ -352,7 +445,732 @@ body::before {
     background: linear-gradient(90deg, transparent, rgba(120, 219, 255, 0.5), transparent);
 }
 
-/* Remove tab content styles since we no longer have tabs */
+
+
+/* Similar Articles Results */
+.similar-results-section {
+    animation: fadeInScale 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.results-header {
+    text-align: center;
+    margin-bottom: 3rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.results-header h2 {
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+    background: linear-gradient(135deg, #78dbff 0%, #a855f7 30%, #ec4899 60%, #f97316 100%);
+    background-size: 300% 300%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: gradient 4s ease infinite;
+    text-align: center;
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.search-info {
+    font-size: 1.1rem;
+    color: #b8c5ff;
+    opacity: 0.9;
+}
+
+.planets-container {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+.planet-group {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.03) 100%);
+    backdrop-filter: blur(25px);
+    border: 1px solid rgba(120, 219, 255, 0.2);
+    border-radius: 20px;
+    padding: 2rem;
+    box-shadow: 
+        0 15px 35px rgba(0, 0, 0, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    position: relative;
+}
+
+.planet-group::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(120, 219, 255, 0.5), transparent);
+}
+
+.planet-header {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid rgba(120, 219, 255, 0.2);
+}
+
+.planet-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: celestialRotate 20s linear infinite;
+    box-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+}
+
+/* Apply the same planet styles to planet-icon class */
+.planet-icon.sun {
+    background: radial-gradient(circle at 30% 30%, #ffeb3b, #ff9800, #ff5722);
+    box-shadow: 0 0 30px #ffeb3b, 0 0 60px #ff9800;
+    animation: celestialRotate 10s linear infinite, sunPulse 3s ease-in-out infinite;
+}
+
+.planet-icon.mercury {
+    background: radial-gradient(circle at 30% 30%, #8d6e63, #5d4037, #3e2723);
+    box-shadow: 0 0 15px #8d6e63;
+}
+
+.planet-icon.venus {
+    background: radial-gradient(circle at 30% 30%, #ffc107, #ff8f00, #e65100);
+    box-shadow: 0 0 20px #ffc107;
+}
+
+.planet-icon.earth {
+    background: radial-gradient(circle at 30% 30%, #2196f3, #4caf50, #1976d2);
+    box-shadow: 0 0 20px #2196f3;
+    position: relative;
+}
+
+.planet-icon.earth::after {
+    content: '';
+    position: absolute;
+    top: 20%;
+    left: 20%;
+    width: 60%;
+    height: 60%;
+    background: radial-gradient(circle, rgba(76, 175, 80, 0.6), transparent);
+    border-radius: 50%;
+}
+
+.planet-icon.mars {
+    background: radial-gradient(circle at 30% 30%, #f44336, #d32f2f, #b71c1c);
+    box-shadow: 0 0 18px #f44336;
+}
+
+.planet-icon.jupiter {
+    background: radial-gradient(circle at 30% 30%, #ff9800, #f57c00, #e65100);
+    box-shadow: 0 0 25px #ff9800;
+    position: relative;
+}
+
+.planet-icon.jupiter::before {
+    content: '';
+    position: absolute;
+    top: 40%;
+    left: 0;
+    width: 100%;
+    height: 20%;
+    background: linear-gradient(90deg, rgba(255, 152, 0, 0.8), rgba(245, 124, 0, 0.8));
+    border-radius: 50px;
+}
+
+.planet-icon.saturn {
+    background: radial-gradient(circle at 30% 30%, #ffc107, #ff8f00, #f57c00);
+    box-shadow: 0 0 20px #ffc107;
+    position: relative;
+}
+
+.planet-icon.saturn::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 80px;
+    height: 80px;
+    border: 2px solid rgba(255, 193, 7, 0.6);
+    border-radius: 50%;
+    transform: translate(-50%, -50%) rotateX(75deg);
+}
+
+.planet-icon.uranus {
+    background: radial-gradient(circle at 30% 30%, #00bcd4, #0097a7, #006064);
+    box-shadow: 0 0 18px #00bcd4;
+}
+
+.planet-icon.neptune {
+    background: radial-gradient(circle at 30% 30%, #3f51b5, #303f9f, #1a237e);
+    box-shadow: 0 0 20px #3f51b5;
+}
+
+.planet-info h3 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    background: linear-gradient(135deg, #78dbff 0%, #a855f7 50%, #ec4899 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.planet-info .credibility-level {
+    font-size: 1rem;
+    color: #b8c5ff;
+    opacity: 0.8;
+}
+
+.articles-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+
+.article-card {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 15px;
+    padding: 1.5rem;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.article-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 35px rgba(120, 219, 255, 0.2);
+    border-color: rgba(120, 219, 255, 0.3);
+}
+
+.article-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.05), transparent);
+    transition: left 0.6s;
+}
+
+.article-card:hover::before {
+    left: 100%;
+}
+
+.article-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #ffffff;
+    margin-bottom: 1rem;
+    line-height: 1.4;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.article-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+    font-size: 0.9rem;
+    color: #b8c5ff;
+    opacity: 0.8;
+}
+
+.article-domain {
+    font-weight: 600;
+    color: #78dbff;
+}
+
+.article-scores {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+    font-size: 0.9rem;
+}
+
+.score-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+.score-label {
+    color: #b8c5ff;
+    opacity: 0.8;
+}
+
+.score-value {
+    font-weight: 700;
+    color: #ffffff;
+}
+
+.article-actions {
+    display: flex;
+    gap: 1rem;
+}
+
+.compare-btn {
+    flex: 1;
+    background: linear-gradient(135deg, rgba(120, 219, 255, 0.2) 0%, rgba(168, 85, 247, 0.2) 100%);
+    border: 1px solid rgba(120, 219, 255, 0.4);
+    color: #78dbff;
+    padding: 0.8rem 1rem;
+    border-radius: 10px;
+    font-family: inherit;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.compare-btn:hover {
+    background: linear-gradient(135deg, rgba(120, 219, 255, 0.3) 0%, rgba(168, 85, 247, 0.3) 100%);
+    border-color: #78dbff;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(120, 219, 255, 0.3);
+}
+
+.visit-btn {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #ffffff;
+    padding: 0.8rem;
+    border-radius: 10px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.visit-btn:hover {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0.1) 100%);
+    border-color: rgba(255, 255, 255, 0.4);
+    transform: translateY(-2px);
+}
+
+/* No Results State */
+.no-results {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: #b8c5ff;
+}
+
+.no-results-icon {
+    font-size: 4rem;
+    margin-bottom: 1.5rem;
+    opacity: 0.6;
+}
+
+.no-results h3 {
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+    color: #78dbff;
+}
+
+.no-results p {
+    font-size: 1.1rem;
+    opacity: 0.8;
+    line-height: 1.5;
+}
+
+/* Credibility Comparison Modal */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(10px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    animation: fadeIn 0.3s ease;
+}
+
+.modal-content {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+    backdrop-filter: blur(25px);
+    border: 1px solid rgba(120, 219, 255, 0.3);
+    border-radius: 25px;
+    max-width: 600px;
+    width: 90%;
+    max-height: 80vh;
+    overflow-y: auto;
+    box-shadow: 
+        0 25px 50px rgba(0, 0, 0, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    position: relative;
+    animation: slideInUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes slideInUp {
+    from {
+        opacity: 0;
+        transform: translateY(50px) scale(0.9);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 2rem 2rem 1rem;
+    border-bottom: 1px solid rgba(120, 219, 255, 0.2);
+}
+
+.modal-header h2 {
+    font-size: 1.5rem;
+    background: linear-gradient(135deg, #78dbff 0%, #a855f7 50%, #ec4899 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin: 0;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    color: #b8c5ff;
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 50%;
+    transition: all 0.3s ease;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-close:hover {
+    background: rgba(255, 107, 107, 0.2);
+    color: #ff6b6b;
+    transform: rotate(90deg);
+}
+
+.modal-body {
+    padding: 2rem;
+    text-align: center;
+}
+
+.modal-loading {
+    text-align: center;
+    padding: 2rem;
+}
+
+.modal-loading .loading-spinner {
+    width: 50px;
+    height: 50px;
+    margin: 0 auto 1rem;
+}
+
+.modal-loading p {
+    color: #b8c5ff;
+    font-size: 1.1rem;
+}
+
+.credibility-analysis {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+    align-items: center;
+}
+
+.analysis-header {
+    text-align: center;
+    margin-bottom: 1rem;
+}
+
+.analysis-url {
+    font-size: 0.9rem;
+    color: #78dbff;
+    word-break: break-all;
+    margin-bottom: 0.5rem;
+    padding: 0.8rem;
+    background: rgba(120, 219, 255, 0.1);
+    border-radius: 10px;
+    border: 1px solid rgba(120, 219, 255, 0.2);
+}
+
+.analysis-planet {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    margin: 2rem 0 2.5rem 0;
+    text-align: center;
+}
+
+.analysis-planet-icon {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: celestialRotate 20s linear infinite;
+    box-shadow: 0 0 25px rgba(255, 255, 255, 0.3);
+}
+
+/* Apply planet styles to analysis-planet-icon */
+.analysis-planet-icon.sun {
+    background: radial-gradient(circle at 30% 30%, #ffeb3b, #ff9800, #ff5722);
+    box-shadow: 0 0 40px #ffeb3b, 0 0 80px #ff9800;
+    animation: celestialRotate 10s linear infinite, sunPulse 3s ease-in-out infinite;
+}
+
+.analysis-planet-icon.mercury {
+    background: radial-gradient(circle at 30% 30%, #8d6e63, #5d4037, #3e2723);
+    box-shadow: 0 0 20px #8d6e63;
+}
+
+.analysis-planet-icon.venus {
+    background: radial-gradient(circle at 30% 30%, #ffc107, #ff8f00, #e65100);
+    box-shadow: 0 0 25px #ffc107;
+}
+
+.analysis-planet-icon.earth {
+    background: radial-gradient(circle at 30% 30%, #2196f3, #4caf50, #1976d2);
+    box-shadow: 0 0 25px #2196f3;
+    position: relative;
+}
+
+.analysis-planet-icon.earth::after {
+    content: '';
+    position: absolute;
+    top: 20%;
+    left: 20%;
+    width: 60%;
+    height: 60%;
+    background: radial-gradient(circle, rgba(76, 175, 80, 0.6), transparent);
+    border-radius: 50%;
+}
+
+.analysis-planet-icon.mars {
+    background: radial-gradient(circle at 30% 30%, #f44336, #d32f2f, #b71c1c);
+    box-shadow: 0 0 22px #f44336;
+}
+
+.analysis-planet-icon.jupiter {
+    background: radial-gradient(circle at 30% 30%, #ff9800, #f57c00, #e65100);
+    box-shadow: 0 0 30px #ff9800;
+    position: relative;
+}
+
+.analysis-planet-icon.jupiter::before {
+    content: '';
+    position: absolute;
+    top: 40%;
+    left: 0;
+    width: 100%;
+    height: 20%;
+    background: linear-gradient(90deg, rgba(255, 152, 0, 0.8), rgba(245, 124, 0, 0.8));
+    border-radius: 50px;
+}
+
+.analysis-planet-icon.saturn {
+    background: radial-gradient(circle at 30% 30%, #ffc107, #ff8f00, #f57c00);
+    box-shadow: 0 0 25px #ffc107;
+    position: relative;
+}
+
+.analysis-planet-icon.saturn::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 100px;
+    height: 100px;
+    border: 3px solid rgba(255, 193, 7, 0.6);
+    border-radius: 50%;
+    transform: translate(-50%, -50%) rotateX(75deg);
+}
+
+.analysis-planet-icon.uranus {
+    background: radial-gradient(circle at 30% 30%, #00bcd4, #0097a7, #006064);
+    box-shadow: 0 0 22px #00bcd4;
+}
+
+.analysis-planet-icon.neptune {
+    background: radial-gradient(circle at 30% 30%, #3f51b5, #303f9f, #1a237e);
+    box-shadow: 0 0 25px #3f51b5;
+}
+
+.analysis-planet-info {
+    text-align: center;
+    margin-top: 0.5rem;
+}
+
+.analysis-planet-info h3 {
+    font-size: 1.8rem;
+    margin-bottom: 0.5rem;
+    background: linear-gradient(135deg, #78dbff 0%, #a855f7 50%, #ec4899 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.analysis-planet-info .credibility-description {
+    color: #b8c5ff;
+    font-size: 1rem;
+}
+
+.detailed-scores {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+    justify-content: center;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.score-detail {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 15px;
+    padding: 1.5rem;
+    text-align: center;
+    backdrop-filter: blur(10px);
+}
+
+.score-detail h4 {
+    font-size: 1rem;
+    margin-bottom: 1rem;
+    color: #b8c5ff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.score-detail .score-icon {
+    font-size: 1.2rem;
+}
+
+.score-detail .score-number {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    background: linear-gradient(135deg, #78dbff 0%, #a855f7 50%, #ec4899 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.score-detail .score-bar {
+    width: 100%;
+    height: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 0.5rem;
+}
+
+.score-detail .score-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.score-detail .score-description {
+    font-size: 0.9rem;
+    color: #b8c5ff;
+    opacity: 0.8;
+}
+
+.analysis-summary {
+    background: linear-gradient(135deg, rgba(120, 219, 255, 0.1) 0%, rgba(168, 85, 247, 0.1) 100%);
+    border: 1px solid rgba(120, 219, 255, 0.3);
+    border-radius: 15px;
+    padding: 1.5rem;
+    text-align: center;
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+.analysis-summary h4 {
+    font-size: 1.2rem;
+    margin-bottom: 1rem;
+    color: #78dbff;
+}
+
+.analysis-summary p {
+    color: #b8c5ff;
+    line-height: 1.5;
+}
+
+/* Modal Error State */
+.modal-error {
+    text-align: center;
+    padding: 2rem;
+}
+
+.modal-error .error-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    opacity: 0.6;
+}
+
+.modal-error h3 {
+    font-size: 1.3rem;
+    margin-bottom: 1rem;
+    color: #ff6b6b;
+}
+
+.modal-error p {
+    color: #b8c5ff;
+    margin-bottom: 2rem;
+    line-height: 1.5;
+}
+
+.retry-btn {
+    background: linear-gradient(135deg, #78dbff 0%, #a855f7 50%, #ec4899 100%);
+    border: none;
+    color: white;
+    padding: 1rem 2rem;
+    border-radius: 15px;
+    font-family: inherit;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.retry-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px rgba(120, 219, 255, 0.3);
+}
 
 .input-group {
     margin-bottom: 2rem;

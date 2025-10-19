@@ -21,7 +21,21 @@
         </header>
 
         <main class="main-content">
-            <div class="input-section">
+            <!-- Tab Navigation -->
+            <div class="tab-container">
+                <button class="tab-button active" onclick="switchTab('analyze')" id="analyze-tab">
+                    <span class="tab-icon">🔍</span>
+                    <span>Analyze Article</span>
+                </button>
+                <button class="tab-button" onclick="switchTab('similar')" id="similar-tab">
+                    <span class="tab-icon">🌌</span>
+                    <span>Similar Articles</span>
+                </button>
+            </div>
+
+            <!-- Analyze Article Tab Content -->
+            <div class="tab-content active" id="analyze-content">
+                <div class="input-section">
                 <div class="input-container">
                     <div class="input-group">
                         <label for="news-url">🌐 Enter news article URL to analyze:</label>
@@ -95,6 +109,38 @@
                     </div>
                 </div>
             </div>
+            </div>
+
+            <!-- Similar Articles Tab Content -->
+            <div class="tab-content" id="similar-content">
+                <div class="input-section">
+                    <div class="input-container">
+                        <div class="input-group">
+                            <label for="article-query">🔍 Enter article title or keywords to find similar articles:</label>
+                            <input 
+                                type="text" 
+                                id="article-query" 
+                                placeholder="e.g., 'Climate change effects on agriculture'"
+                            />
+                        </div>
+
+                        <button class="analyze-btn" onclick="searchSimilarArticles()">
+                            <span class="btn-icon">🌌</span>
+                            Search Similar Articles
+                        </button>
+                    </div>
+                </div>
+
+                <div class="similar-results-section" id="similar-results-section" style="display: none;">
+                    <div class="results-header">
+                        <h2>Similar Articles by Credibility</h2>
+                        <div class="search-info" id="search-info"></div>
+                    </div>
+                    <div class="planets-container" id="planets-container">
+                        <!-- Planet groups will be populated here -->
+                    </div>
+                </div>
+            </div>
 
             <div class="loading" id="loading" style="display: none;">
                 <div class="loading-spinner"></div>
@@ -112,6 +158,22 @@
         <footer class="footer">
             <p>🌙 Newsify</p>
         </footer>
+    </div>
+
+    <!-- Credibility Comparison Modal -->
+    <div class="modal-overlay" id="credibility-modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>🔍 Detailed Credibility Analysis</h2>
+                <button class="modal-close" onclick="closeCredibilityModal()">✕</button>
+            </div>
+            <div class="modal-body" id="modal-body">
+                <div class="modal-loading">
+                    <div class="loading-spinner"></div>
+                    <p>Analyzing article credibility...</p>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script src="/static/script.js"></script>
