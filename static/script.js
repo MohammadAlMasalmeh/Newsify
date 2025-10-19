@@ -92,8 +92,7 @@ function showResult(result, isURL = false) {
     const reliabilityDescription = document.getElementById('reliability-description');
     const confidenceFill = document.getElementById('confidence-fill');
     const confidenceScore = document.getElementById('confidence-score');
-    const extractedText = document.getElementById('extracted-text');
-    const extractedContent = document.getElementById('extracted-content');
+
     
     // Get celestial body from backend result
     const celestialBody = getCelestialBodyFromBackend(result);
@@ -131,19 +130,43 @@ function showResult(result, isURL = false) {
     
     confidenceFill.style.background = planetColors[planetName] || planetColors['sun'];
     
-    // Show extracted text if it's a URL analysis
-    if (isURL && result.extracted_text) {
-        extractedContent.textContent = result.extracted_text;
-        extractedText.style.display = 'block';
-    } else {
-        extractedText.style.display = 'none';
+    // Show model breakdown if scores are available
+    if (result.fake_news_score !== undefined && result.sarcasm_score !== undefined) {
+        showModelBreakdown(result.fake_news_score, result.sarcasm_score);
     }
+    
+
     
     // Show result section
     resultSection.style.display = 'block';
     
     // Scroll to result
     resultSection.scrollIntoView({ behavior: 'smooth' });
+}
+
+// Show model breakdown with animated bars
+function showModelBreakdown(fakeNewsScore, sarcasmScore) {
+    const modelBreakdown = document.getElementById('model-breakdown');
+    const fakeNewsFill = document.getElementById('fake-news-fill');
+    const fakeNewsValue = document.getElementById('fake-news-value');
+    const sarcasmFill = document.getElementById('sarcasm-fill');
+    const sarcasmValue = document.getElementById('sarcasm-value');
+    
+    // Convert scores to percentages
+    const fakeNewsPercent = Math.round(fakeNewsScore * 100);
+    const sarcasmPercent = Math.round(sarcasmScore * 100);
+    
+    // Show the breakdown section
+    modelBreakdown.style.display = 'block';
+    
+    // Animate the bars with a slight delay for visual effect
+    setTimeout(() => {
+        fakeNewsFill.style.width = `${fakeNewsPercent}%`;
+        fakeNewsValue.textContent = `${fakeNewsPercent}%`;
+        
+        sarcasmFill.style.width = `${sarcasmPercent}%`;
+        sarcasmValue.textContent = `${sarcasmPercent}%`;
+    }, 300);
 }
 
 // Show error message

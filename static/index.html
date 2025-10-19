@@ -63,10 +63,35 @@
                                 <span class="result-label" id="result-label"></span>
                             </div>
                         </div>
-                        <div class="extracted-text" id="extracted-text" style="display: none;">
-                            <h3>📄 Extracted Text Preview:</h3>
-                            <p id="extracted-content"></p>
+                        
+                        <div class="model-breakdown" id="model-breakdown" style="display: none;">
+                            <h3>🤖 Model Analysis Breakdown</h3>
+                            <div class="breakdown-container">
+                                <div class="model-score">
+                                    <div class="model-label">
+                                        <span class="model-icon">🧠</span>
+                                        <span>Fake News Detection</span>
+                                    </div>
+                                    <div class="score-bar">
+                                        <div class="score-fill fake-news-fill" id="fake-news-fill"></div>
+                                    </div>
+                                    <div class="score-value" id="fake-news-value">0%</div>
+                                </div>
+                                
+                                <div class="model-score">
+                                    <div class="model-label">
+                                        <span class="model-icon">😏</span>
+                                        <span>Sarcasm/Satire Detection</span>
+                                    </div>
+                                    <div class="score-bar">
+                                        <div class="score-fill sarcasm-fill" id="sarcasm-fill"></div>
+                                    </div>
+                                    <div class="score-value" id="sarcasm-value">0%</div>
+                                </div>
+                            </div>
                         </div>
+                        
+
                     </div>
                 </div>
             </div>

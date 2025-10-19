@@ -57,7 +57,9 @@ def predict_url():
             "label": frontend_label,
             "score": round(frontend_score, 4),
             "extracted_text": f"Article analyzed with {result.get('chunks_processed', 1)} text chunks processed.",
-            "planet": result.get('planet', '☀️ Sun')
+            "planet": result.get('planet', '☀️ Sun'),
+            "fake_news_score": round(result.get('fake_news_score', 0), 4),
+            "sarcasm_score": round(result.get('sarcasm_score', 0), 4)
         }
         
         return jsonify(response)

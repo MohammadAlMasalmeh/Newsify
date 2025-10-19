@@ -602,26 +602,92 @@ body::before {
     color: #4fc3f7;
 }
 
-/* Extracted Text */
-.extracted-text {
+/* Model Breakdown */
+.model-breakdown {
     margin-top: 2rem;
     padding-top: 2rem;
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    border-top: 1px solid rgba(120, 219, 255, 0.2);
 }
 
-.extracted-text h3 {
+.model-breakdown h3 {
+    margin-bottom: 1.5rem;
+    color: #78dbff;
+    font-size: 1.3rem;
+    text-align: center;
+    background: linear-gradient(135deg, #78dbff 0%, #a855f7 50%, #ec4899 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.breakdown-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.model-score {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 15px;
+    padding: 1.2rem;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+
+.model-label {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
     margin-bottom: 1rem;
-    color: #4fc3f7;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #b8c5ff;
 }
 
-.extracted-text p {
-    background: rgba(255, 255, 255, 0.05);
-    padding: 1rem;
-    border-radius: 10px;
-    line-height: 1.6;
-    font-size: 0.9rem;
-    opacity: 0.8;
+.model-icon {
+    font-size: 1.3rem;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
 }
+
+.score-bar {
+    width: 100%;
+    height: 12px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    overflow: hidden;
+    margin-bottom: 0.8rem;
+    position: relative;
+}
+
+.score-fill {
+    height: 100%;
+    border-radius: 6px;
+    transition: width 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.fake-news-fill {
+    background: linear-gradient(90deg, #26de81 0%, #ffc107 50%, #ff6b6b 100%);
+}
+
+.sarcasm-fill {
+    background: linear-gradient(90deg, #4fc3f7 0%, #a855f7 50%, #ec4899 100%);
+}
+
+.score-value {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #ffffff;
+    text-align: right;
+    background: linear-gradient(135deg, #78dbff 0%, #a855f7 50%, #ec4899 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+
 
 /* Loading */
 .loading {
