@@ -579,27 +579,102 @@ body::before {
     position: relative;
 }
 
-.confidence-fill::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
-    border-radius: 10px;
-    animation: shimmer 2s ease-in-out infinite;
-}
 
-@keyframes shimmer {
-    0%, 100% { transform: translateX(-100%); }
-    50% { transform: translateX(100%); }
-}
 
 .confidence-score {
     font-size: 1.5rem;
     font-weight: 600;
     color: #4fc3f7;
+}
+
+/* Reasoning Section */
+.reasoning-section {
+    margin-top: 2rem;
+    padding-top: 2rem;
+    border-top: 1px solid rgba(120, 219, 255, 0.2);
+}
+
+.reasoning-section h3 {
+    margin-bottom: 1.5rem;
+    color: #78dbff;
+    font-size: 1.4rem;
+    text-align: center;
+    background: linear-gradient(135deg, #78dbff 0%, #a855f7 50%, #ec4899 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.reasoning-summary {
+    background: linear-gradient(135deg, rgba(120, 219, 255, 0.1) 0%, rgba(168, 85, 247, 0.05) 100%);
+    border: 1px solid rgba(120, 219, 255, 0.3);
+    border-radius: 15px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    font-size: 1.1rem;
+    line-height: 1.6;
+    text-align: center;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+
+.reasoning-details {
+    display: grid;
+    gap: 1.5rem;
+}
+
+.reasoning-details h4 {
+    color: #b8c5ff;
+    font-size: 1rem;
+    margin-bottom: 0.8rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.reasoning-indicators,
+.reasoning-credibility,
+.reasoning-language,
+.reasoning-breakdown {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 1.2rem;
+    backdrop-filter: blur(5px);
+}
+
+.reasoning-indicators {
+    border-color: rgba(255, 107, 107, 0.3);
+    background: rgba(255, 107, 107, 0.05);
+}
+
+.reasoning-credibility {
+    border-color: rgba(38, 222, 129, 0.3);
+    background: rgba(38, 222, 129, 0.05);
+}
+
+.reasoning-details ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.reasoning-details li {
+    padding: 0.5rem 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    line-height: 1.5;
+    font-size: 0.95rem;
+}
+
+.reasoning-details li:last-child {
+    border-bottom: none;
+}
+
+.reasoning-details p {
+    margin: 0;
+    line-height: 1.6;
+    font-size: 0.95rem;
+    opacity: 0.9;
 }
 
 /* Extracted Text */

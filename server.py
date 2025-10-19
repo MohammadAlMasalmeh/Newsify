@@ -45,19 +45,20 @@ def predict_url():
         if 'error' in result:
             return jsonify({"error": "AnalysisError", "detail": result['error']}), 400
         
-        # Convert to frontend format
+        # Convert to frontend format (restore original logic)
         if result['label'] == 'Fake':
             frontend_label = "FAKE"
-            frontend_score = result['score']
+            frontend_score = result['score']  # For fake news, use score as-is
         else:
             frontend_label = "REAL"
-            frontend_score = 1.0 - result['score']
+            frontend_score = 1.0 - result['score']  # For real news, invert the score
         
         response = {
             "label": frontend_label,
             "score": round(frontend_score, 4),
             "extracted_text": f"Article analyzed with {result.get('chunks_processed', 1)} text chunks processed.",
-            "planet": result.get('planet', '☀️ Sun')
+            "planet": result.get('planet', '☀️ Sun'),
+            "reasoning": result.get('reasoning', {})
         }
         
         return jsonify(response)

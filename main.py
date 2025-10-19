@@ -5,7 +5,8 @@ from transformers import AutoTokenizer, AutoModelForSequenceClassification
 from urllib.parse import urlparse
 from datetime import datetime, timedelta
 import logging
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, List
+import re
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -246,6 +247,160 @@ def get_satire_score(text: str) -> float:
     return sarcasm_score
 
 
+def calculate_rule_based_score(text: str) -> float:
+    """
+    Calculate a rule-based fake news score based on common patterns.
+    Returns a score from 0.0 (likely real) to 1.0 (likely fake).
+    """
+    score = 0.0
+    text_lower = text.lower()
+    
+    # Strong fake news indicators
+    strong_fake_indicators = [
+        'breaking:', 'you won\'t believe', 'doctors hate', 'this one trick',
+        'shocking truth', 'they don\'t want you to know', 'secret revealed',
+        'incredible discovery', 'amazing breakthrough', 'unbelievable results'
+    ]
+    
+    # Moderate fake news indicators
+    moderate_fake_indicators = [
+        'exclusive', 'shocking', 'incredible', 'amazing', 'unbelievable',
+        'secret', 'hidden', 'exposed', 'revealed', 'conspiracy'
+    ]
+    
+    # Credibility indicators (reduce fake score)
+    credibility_indicators = [
+        'according to', 'study shows', 'research indicates', 'data suggests',
+        'published in', 'peer-reviewed', 'university', 'professor', 'expert',
+        'reuters', 'associated press', 'bloomberg', 'wall street journal'
+    ]
+    
+    # Check for strong indicators
+    for indicator in strong_fake_indicators:
+        if indicator in text_lower:
+            score += 0.3
+    
+    # Check for moderate indicators
+    for indicator in moderate_fake_indicators:
+        if indicator in text_lower:
+            score += 0.1
+    
+    # Check for credibility indicators (reduce score)
+    for indicator in credibility_indicators:
+        if indicator in text_lower:
+            score -= 0.2
+    
+    # Excessive punctuation
+    exclamation_count = text.count('!')
+    if exclamation_count > 3:
+        score += min(exclamation_count * 0.05, 0.3)
+    
+    # All caps words (excluding normal acronyms)
+    caps_words = re.findall(r'\b[A-Z]{3,}\b', text)
+    caps_words = [word for word in caps_words if word not in ['USA', 'FBI', 'CIA', 'NASA', 'WHO', 'FDA']]
+    if len(caps_words) > 2:
+        score += min(len(caps_words) * 0.05, 0.2)
+    
+    return min(max(score, 0.0), 1.0)  # Clamp between 0 and 1
+
+
+def generate_reasoning(text: str, rule_score: float, sarcasm_score: float, final_score: float) -> Dict[str, Any]:
+    """
+    Generate detailed reasoning for why an article is classified as fake or real.
+    """
+    reasoning = {
+        'summary': '',
+        'key_indicators': [],
+        'credibility_factors': [],
+        'language_analysis': '',
+        'detailed_breakdown': []
+    }
+    
+    text_lower = text.lower()
+    
+    # Analyze fake news indicators
+    fake_indicators_found = []
+    strong_fake_indicators = [
+        ('breaking:', 'Sensational breaking news format'),
+        ('you won\'t believe', 'Clickbait language designed to manipulate emotions'),
+        ('doctors hate', 'Classic fake news phrase targeting medical misinformation'),
+        ('this one trick', 'Typical scam/clickbait language'),
+        ('shocking truth', 'Sensationalized language without evidence'),
+        ('they don\'t want you to know', 'Conspiracy theory language'),
+        ('secret revealed', 'Appeals to exclusive/hidden knowledge'),
+        ('incredible discovery', 'Exaggerated claims without verification'),
+        ('amazing breakthrough', 'Overstated scientific claims'),
+        ('unbelievable results', 'Hyperbolic language lacking credibility')
+    ]
+    
+    for indicator, explanation in strong_fake_indicators:
+        if indicator in text_lower:
+            fake_indicators_found.append(f"• {explanation}")
+    
+    # Analyze credibility indicators
+    credibility_found = []
+    credibility_indicators = [
+        ('according to', 'Proper source attribution'),
+        ('study shows', 'Reference to research/evidence'),
+        ('research indicates', 'Scientific backing mentioned'),
+        ('data suggests', 'Data-driven reporting'),
+        ('published in', 'Academic/peer-reviewed sources'),
+        ('university', 'Academic institution involvement'),
+        ('professor', 'Expert sources quoted'),
+        ('reuters', 'Reputable news agency'),
+        ('associated press', 'Established news wire service'),
+        ('bloomberg', 'Credible financial news source')
+    ]
+    
+    for indicator, explanation in credibility_indicators:
+        if indicator in text_lower:
+            credibility_found.append(f"• {explanation}")
+    
+    # Generate summary based on final score
+    if final_score >= 0.7:
+        reasoning['summary'] = "This article shows strong indicators of being unreliable or fake news."
+    elif final_score >= 0.5:
+        reasoning['summary'] = "This article shows mixed signals but leans toward being questionable."
+    elif final_score >= 0.3:
+        reasoning['summary'] = "This article appears mostly credible with some minor concerns."
+    else:
+        reasoning['summary'] = "This article shows strong indicators of being reliable and trustworthy."
+    
+    # Compile key indicators
+    if fake_indicators_found:
+        reasoning['key_indicators'] = fake_indicators_found
+    
+    if credibility_found:
+        reasoning['credibility_factors'] = credibility_found
+    
+    # Language analysis
+    exclamation_count = text.count('!')
+    caps_words = len(re.findall(r'\b[A-Z]{3,}\b', text))
+    
+    language_notes = []
+    if exclamation_count > 3:
+        language_notes.append(f"Excessive punctuation ({exclamation_count} exclamation marks)")
+    if caps_words > 2:
+        language_notes.append(f"Frequent use of all-caps words ({caps_words} instances)")
+    if sarcasm_score > 0.3:
+        language_notes.append("Sarcastic or satirical tone detected")
+    
+    reasoning['language_analysis'] = "; ".join(language_notes) if language_notes else "Professional, neutral tone"
+    
+
+    
+    # Detailed breakdown with user-friendly formatting
+    pattern_percentage = int(rule_score * 100)
+    sarcasm_percentage = int(sarcasm_score * 100)
+    
+    reasoning['detailed_breakdown'] = [
+        f"Pattern Analysis: {pattern_percentage}% - {'Many' if rule_score > 0.6 else 'Some' if rule_score > 0.3 else 'Few'} suspicious patterns detected",
+        f"Sarcasm Detection: {sarcasm_percentage}% - {'High' if sarcasm_score > 0.3 else 'Low'} satirical content"
+    ]
+    
+    return reasoning
+
+
 def get_truthfulness_score(article_input: str) -> Dict[str, Any]:
     """
     Analyzes an article and returns a truthfulness score (0.0-1.0) 
@@ -317,8 +472,12 @@ def get_truthfulness_score(article_input: str) -> Dict[str, Any]:
     # Use maximum satire score (if any part is satirical, flag it)
     sarcasm_score = max(satire_scores) if satire_scores else 0.0
     
-    # Combine scores: take the maximum of fake news and satire scores
-    final_score = max(final_fake_score, sarcasm_score)
+    # Calculate rule-based score (primary classifier)
+    rule_based_score = calculate_rule_based_score(article_text)
+    
+    # Combine scores: use rule-based as primary, sarcasm as secondary
+    # Ignore the broken ML model for now
+    final_score = max(rule_based_score, sarcasm_score)
     
     # Map score to planet (0.0 = Sun, 1.0 = Neptune)
     planet_index = min(int(final_score * len(PLANETS)), len(PLANETS) - 1)
@@ -327,6 +486,14 @@ def get_truthfulness_score(article_input: str) -> Dict[str, Any]:
     # Determine label based on threshold
     predicted_label = "Fake" if final_score > 0.5 else "Real"
     
+    # Generate reasoning for the classification
+    reasoning = generate_reasoning(
+        text=article_text,
+        rule_score=rule_based_score,
+        sarcasm_score=sarcasm_score,
+        final_score=final_score
+    )
+    
     # Build result
     result = {
         'score': round(final_score, 4),
@@ -334,9 +501,11 @@ def get_truthfulness_score(article_input: str) -> Dict[str, Any]:
         'label': predicted_label,
         'confidence': round(final_score, 4),
         'fake_news_score': round(final_fake_score, 4),
+        'rule_based_score': round(rule_based_score, 4),
         'sarcasm_score': round(sarcasm_score, 4),
         'source': source,
-        'chunks_processed': len(fake_news_chunks)
+        'chunks_processed': len(fake_news_chunks),
+        'reasoning': reasoning
     }
     
     # Store in cache
