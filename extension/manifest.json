@@ -1,0 +1,24 @@
+{
+  "manifest_version": 3,
+  "name": "Newsify - Fake News Detector",
+  "version": "1.0",
+  "description": "Detect fake news on any webpage with our cosmic truth detector",
+  "permissions": [
+    "activeTab",
+    "scripting"
+  ],
+  "host_permissions": [
+    "http://localhost:8001/*"
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Analyze this page for fake news"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}
