@@ -139,61 +139,11 @@ function showResult(result, isURL = false) {
         extractedText.style.display = 'none';
     }
     
-    // Show reasoning if available
-    if (result.reasoning) {
-        showReasoning(result.reasoning);
-    }
-    
     // Show result section
     resultSection.style.display = 'block';
     
     // Scroll to result
     resultSection.scrollIntoView({ behavior: 'smooth' });
-}
-
-// Show reasoning section
-function showReasoning(reasoning) {
-    const reasoningSection = document.getElementById('reasoning-section');
-    const reasoningSummary = document.getElementById('reasoning-summary');
-    const reasoningIndicators = document.getElementById('reasoning-indicators');
-    const reasoningCredibility = document.getElementById('reasoning-credibility');
-    const languageAnalysis = document.getElementById('language-analysis');
-    const breakdownList = document.getElementById('breakdown-list');
-
-    const indicatorsList = document.getElementById('indicators-list');
-    const credibilityList = document.getElementById('credibility-list');
-    
-    // Show summary
-    reasoningSummary.textContent = reasoning.summary;
-    
-    // Show suspicious indicators if any
-    if (reasoning.key_indicators && reasoning.key_indicators.length > 0) {
-        indicatorsList.innerHTML = reasoning.key_indicators.map(indicator => `<li>${indicator}</li>`).join('');
-        reasoningIndicators.style.display = 'block';
-    } else {
-        reasoningIndicators.style.display = 'none';
-    }
-    
-    // Show credibility factors if any
-    if (reasoning.credibility_factors && reasoning.credibility_factors.length > 0) {
-        credibilityList.innerHTML = reasoning.credibility_factors.map(factor => `<li>${factor}</li>`).join('');
-        reasoningCredibility.style.display = 'block';
-    } else {
-        reasoningCredibility.style.display = 'none';
-    }
-    
-    // Show language analysis
-    languageAnalysis.textContent = reasoning.language_analysis;
-    
-    // Show detailed breakdown
-    if (reasoning.detailed_breakdown && reasoning.detailed_breakdown.length > 0) {
-        breakdownList.innerHTML = reasoning.detailed_breakdown.map(item => `<li>${item}</li>`).join('');
-    }
-    
-
-    
-    // Show the reasoning section
-    reasoningSection.style.display = 'block';
 }
 
 // Show error message
